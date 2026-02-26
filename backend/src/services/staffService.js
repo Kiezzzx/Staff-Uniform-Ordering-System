@@ -38,6 +38,47 @@ const getStaff = async () => {
   });
 };
 
+const getRoleLimits = async () => {
+  const rows = await staffRepository.getRoleAllowanceLimits();
+  return rows.map((row) => ({
+    role: String(row.roleName || '').toUpperCase(),
+    annualLimit: Number(row.annualLimit || 0),
+  }));
+};
+
+const updateRoleLimit = async ({ roleName, annualLimit }) => {
+  const normalizedRoleName = String(roleName || '').trim().toUpperCase();
+  const limit = Number(annualLimit);
+
+  if (!normalizedRoleName) {
+    const error = new Error('roleName is required.');
+    error.code = 'VALIDATION_ERROR';
+    throw error;
+  }
+
+  if (!Number.isInteger(limit) || limit < 0) {
+    const error = new Error('annualLimit must be an integer >= 0.');
+    error.code = 'VALIDATION_ERROR';
+    throw error;
+  }
+
+  const role = await staffRepository.getRoleByName(normalizedRoleName);
+  if (!role) {
+    const error = new Error('Role not found.');
+    error.code = 'NOT_FOUND';
+    throw error;
+  }
+
+  await staffRepository.upsertRoleAllowanceLimit(normalizedRoleName, limit);
+
+  return {
+    role: normalizedRoleName,
+    annualLimit: limit,
+  };
+};
+
 module.exports = {
   getStaff,
+  getRoleLimits,
+  updateRoleLimit,
 };

@@ -34,8 +34,18 @@ const initDatabase = () => {
         return;
       }
 
-      console.log('[sqlite] schema initialized');
-      resolve();
+      db.run('ALTER TABLE uniform_requests ADD COLUMN reorder_reason TEXT', (alterErr) => {
+        if (
+          alterErr &&
+          !String(alterErr.message || '').toLowerCase().includes('duplicate column name')
+        ) {
+          reject(alterErr);
+          return;
+        }
+
+        console.log('[sqlite] schema initialized');
+        resolve();
+      });
     });
   });
 };

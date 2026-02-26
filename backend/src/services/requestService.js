@@ -46,23 +46,53 @@ const getRoleLimitsMap = async () => {
   };
 };
 
-const createRequest = async ({ staffId, items }) => {
+const createRequest = async ({ staffId, items, note }) => {
   // STEP 1: Basic Parameter Validation
-  if (staffId === undefined || !Array.isArray(items) || items.length === 0) {
+  const parsedStaffId = Number(staffId);
+  if (
+    !Number.isInteger(parsedStaffId) ||
+    parsedStaffId <= 0 ||
+    !Array.isArray(items) ||
+    items.length === 0
+  ) {
     throw createError('VALIDATION_ERROR', 'staffId is required and items must be a non-empty array.');
   }
 
   for (const item of items) {
-    const hasUniformItemId = item && item.uniformItemId !== undefined;
+    const uniformItemId = Number(item?.uniformItemId);
     const quantityIsPositiveInt = Number.isInteger(item?.quantity) && item.quantity > 0;
+    const uniformItemIdIsPositiveInt = Number.isInteger(uniformItemId) && uniformItemId > 0;
 
-    if (!hasUniformItemId || !quantityIsPositiveInt) {
+    if (!uniformItemIdIsPositiveInt || !quantityIsPositiveInt) {
       throw createError('VALIDATION_ERROR', 'Each item must include uniformItemId and positive integer quantity.');
     }
   }
 
+  let normalizedNote = null;
+  if (note !== undefined && note !== null) {
+    if (typeof note !== 'string') {
+      throw createError('VALIDATION_ERROR', 'note must be a string.');
+    }
+    normalizedNote = note.trim();
+    if (normalizedNote.length > 500) {
+      throw createError('VALIDATION_ERROR', 'note must be 500 characters or less.');
+    }
+    if (!normalizedNote) {
+      normalizedNote = null;
+    }
+  }
+
+  const seenUniformItemIds = new Set();
+  for (const item of items) {
+    const uniformItemId = Number(item.uniformItemId);
+    if (seenUniformItemIds.has(uniformItemId)) {
+      throw createError('VALIDATION_ERROR', `Duplicate uniformItemId in request: ${uniformItemId}.`);
+    }
+    seenUniformItemIds.add(uniformItemId);
+  }
+
   // STEP 2: Staff Existence Check
-  const staff = await staffRepository.getStaffById(staffId);
+  const staff = await staffRepository.getStaffById(parsedStaffId);
   if (!staff) {
     throw createError('NOT_FOUND', 'Staff not found.');
   }
@@ -70,18 +100,20 @@ const createRequest = async ({ staffId, items }) => {
   // STEP 3: UniformItem Existence Check
   const uniformItemsById = new Map();
   for (const item of items) {
-    const uniformItem = await uniformItemRepository.getUniformItemById(item.uniformItemId);
+    const uniformItemId = Number(item.uniformItemId);
+    const uniformItem = await uniformItemRepository.getUniformItemById(uniformItemId);
     if (!uniformItem) {
-      throw createError('NOT_FOUND', `Uniform item not found: ${item.uniformItemId}.`);
+      throw createError('NOT_FOUND', `Uniform item not found: ${uniformItemId}.`);
     }
-    uniformItemsById.set(item.uniformItemId, uniformItem);
+    uniformItemsById.set(uniformItemId, uniformItem);
   }
 
   // STEP 4: Stock Check
   for (const item of items) {
-    const uniformItem = uniformItemsById.get(item.uniformItemId);
+    const uniformItemId = Number(item.uniformItemId);
+    const uniformItem = uniformItemsById.get(uniformItemId);
     if (item.quantity > uniformItem.stock_on_hand) {
-      throw createError('INSUFFICIENT_STOCK', `Insufficient stock for uniform item: ${item.uniformItemId}.`);
+      throw createError('INSUFFICIENT_STOCK', `Insufficient stock for uniform item: ${uniformItemId}.`);
     }
   }
 
@@ -90,14 +122,17 @@ const createRequest = async ({ staffId, items }) => {
   const roleLimits = await getRoleLimitsMap();
   const yearlyLimit = roleLimits[roleName];
 
-  if (!yearlyLimit) {
+  if (yearlyLimit === undefined || yearlyLimit === null) {
     throw createError('VALIDATION_ERROR', 'Staff role is not configured for allowance limits.');
+  }
+  if (!Number.isFinite(yearlyLimit) || yearlyLimit < 0) {
+    throw createError('VALIDATION_ERROR', 'Configured role allowance limit is invalid.');
   }
 
   const now = new Date();
   const currentYear = now.getUTCFullYear();
   const requestedTotal = items.reduce((sum, item) => sum + item.quantity, 0);
-  const usedAllowanceRow = await requestRepository.getUsedAllowanceForYear(staffId, currentYear);
+  const usedAllowanceRow = await requestRepository.getUsedAllowanceForYear(parsedStaffId, currentYear);
   const usedAllowance = Number(usedAllowanceRow?.used_quantity || 0);
 
   if (usedAllowance + requestedTotal > yearlyLimit) {
@@ -107,19 +142,21 @@ const createRequest = async ({ staffId, items }) => {
   // STEP 6: Cooldown Check
   const cooldownMs = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
   for (const item of items) {
-    const latestRequest = await requestRepository.getLatestRequestForItem(staffId, item.uniformItemId);
-    if (!latestRequest?.requested_at) {
+    const uniformItemId = Number(item.uniformItemId);
+    const latestRequest = await requestRepository.getLatestRequestForItem(parsedStaffId, uniformItemId);
+    const cooldownAnchorAt = latestRequest?.cooldown_anchor_at || latestRequest?.requested_at || null;
+    if (!cooldownAnchorAt) {
       continue;
     }
 
-    const latestRequestedAt = toUtcDate(latestRequest.requested_at);
+    const latestRequestedAt = toUtcDate(cooldownAnchorAt);
     if (Number.isNaN(latestRequestedAt.getTime())) {
       continue;
     }
 
     const cooldownUntil = new Date(latestRequestedAt.getTime() + cooldownMs);
     if (now < cooldownUntil) {
-      throw createError('COOLDOWN_ACTIVE', `Cooldown active for uniform item: ${item.uniformItemId}.`);
+      throw createError('COOLDOWN_ACTIVE', `Cooldown active for uniform item: ${uniformItemId}.`);
     }
   }
 
@@ -131,13 +168,14 @@ const createRequest = async ({ staffId, items }) => {
 
   try {
     // STEP 8: Create Request
-    createdRequest = await requestRepository.createUniformRequest(staffId, requestedAt);
+    createdRequest = await requestRepository.createUniformRequest(parsedStaffId, requestedAt, normalizedNote);
 
     // STEP 9: Deduct Stock
     for (const item of items) {
-      const result = await uniformItemRepository.decrementStockIfAvailable(item.uniformItemId, item.quantity);
+      const uniformItemId = Number(item.uniformItemId);
+      const result = await uniformItemRepository.decrementStockIfAvailable(uniformItemId, item.quantity);
       if (!result || result.changes !== 1) {
-        throw createError('INSUFFICIENT_STOCK', `Insufficient stock for uniform item: ${item.uniformItemId}.`);
+        throw createError('INSUFFICIENT_STOCK', `Insufficient stock for uniform item: ${uniformItemId}.`);
       }
     }
 
@@ -145,7 +183,7 @@ const createRequest = async ({ staffId, items }) => {
     for (const item of items) {
       await requestRepository.createUniformRequestItem(
         createdRequest.id,
-        item.uniformItemId,
+        Number(item.uniformItemId),
         item.quantity
       );
     }
@@ -157,6 +195,7 @@ const createRequest = async ({ staffId, items }) => {
       id: createdRequest.id,
       staffId: createdRequest.staff_id,
       status: createdRequest.status,
+      note: createdRequest.reorder_reason || null,
       requestedAt: createdRequest.requested_at,
     };
   } catch (error) {
@@ -205,6 +244,7 @@ const getRequestById = async ({ id }) => {
     staffName: detail.staffName,
     storeName: detail.storeName,
     status: detail.status,
+    note: detail.reorderReason || null,
     requestedAt: detail.requestedAt,
     items: items.map((item) => ({
       uniformItemId: item.uniformItemId,

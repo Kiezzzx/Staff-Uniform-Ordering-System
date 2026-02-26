@@ -51,8 +51,13 @@ const insertImportRowError = async (importJobId, rowNumber, errorMessage) => {
 };
 
 const upsertStore = async (name) => {
+  const existing = await get('SELECT id, name FROM stores WHERE name = ? ORDER BY id ASC LIMIT 1', [name]);
+  if (existing) {
+    return existing;
+  }
+
   await run('INSERT OR IGNORE INTO stores (name) VALUES (?)', [name]);
-  return get('SELECT id, name FROM stores WHERE name = ?', [name]);
+  return get('SELECT id, name FROM stores WHERE name = ? ORDER BY id ASC LIMIT 1', [name]);
 };
 
 const upsertRole = async (name) => {

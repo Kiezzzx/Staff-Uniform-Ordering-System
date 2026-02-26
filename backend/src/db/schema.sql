@@ -2,7 +2,7 @@
 
 CREATE TABLE IF NOT EXISTS stores (
   id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL
+  name TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS roles (
@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS uniform_requests (
   id INTEGER PRIMARY KEY,
   staff_id INTEGER NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('REQUESTED', 'DISPATCHED', 'ARRIVED', 'COLLECTED')),
+  reorder_reason TEXT,
   requested_at DATETIME NOT NULL,
   dispatched_at DATETIME,
   arrived_at DATETIME,

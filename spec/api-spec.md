@@ -204,3 +204,54 @@ Standard Codes:
 - ALLOWANCE_EXCEEDED
 - COOLDOWN_ACTIVE
 - INVALID_STATUS_TRANSITION
+
+## 10. Extension: Role Allowance Config (v1.2 Extension)
+These endpoints are an extension to support runtime configuration of role-based allowance limits.
+
+### 10.1 GET /staff/role-limits
+List all configured role allowance limits.
+
+Success 200:
+
+```json
+{
+  "data": {
+    "items": [
+      {
+        "role": "MANAGER",
+        "annualLimit": 5
+      },
+      {
+        "role": "CASUAL",
+        "annualLimit": 2
+      }
+    ]
+  }
+}
+```
+
+### 10.2 PATCH /staff/role-limits/:roleName
+Update one role's annual allowance limit.
+
+Request Body:
+
+```json
+{
+  "annualLimit": 6
+}
+```
+
+Rules:
+- `roleName` must exist in `roles`.
+- `annualLimit` must be an integer >= 0.
+
+Success 200:
+
+```json
+{
+  "data": {
+    "role": "MANAGER",
+    "annualLimit": 6
+  }
+}
+```

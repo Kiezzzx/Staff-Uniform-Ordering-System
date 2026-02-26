@@ -25,7 +25,7 @@ const formatDate = (value) => {
 export default function RequestsPage() {
   const [items, setItems] = useState([])
   const [staffItems, setStaffItems] = useState([])
-  const [filters, setFilters] = useState({ status: '', staffId: '', storeId: '' })
+  const [filters, setFilters] = useState({ status: '', staffId: '' })
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -54,7 +54,7 @@ export default function RequestsPage() {
     setSelectedRequest(null)
     loadList()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.status, filters.staffId, filters.storeId])
+  }, [filters.status, filters.staffId])
 
   const openDetail = async (id) => {
     // Toggle closed if the same request is clicked again.
@@ -101,7 +101,7 @@ export default function RequestsPage() {
       <PageTitle title="Requests" subtitle="Filter and view request lifecycle." />
       <ErrorAlert message={errorMessage} />
 
-      <div className="mb-4 grid gap-3 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-3">
+      <div className="mb-4 grid gap-3 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-2">
         <select
           value={filters.status}
           onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
@@ -127,12 +127,6 @@ export default function RequestsPage() {
           ))}
         </select>
 
-        <input
-          value={filters.storeId}
-          onChange={(event) => setFilters((prev) => ({ ...prev, storeId: event.target.value }))}
-          placeholder="Store ID"
-          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
       </div>
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
@@ -189,6 +183,7 @@ export default function RequestsPage() {
             <p>Store: {selectedRequest.storeName}</p>
             <p>Status: <StatusBadge status={selectedRequest.status} /></p>
             <p className="sm:col-span-2">Requested At: {formatDate(selectedRequest.requestedAt)}</p>
+            <p className="sm:col-span-2">Note: {selectedRequest.note || '-'}</p>
           </div>
 
           <div className="mt-4 overflow-x-auto">

@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client'
 import PageTitle from '../components/PageTitle'
 import ErrorAlert from '../components/ErrorAlert'
-import ConnectivityTest from '../components/ConnectivityTest'
 
 const createEmptyLine = () => ({ uniformItemId: '', quantity: '' })
 
@@ -11,6 +10,7 @@ export default function CreateRequestPage() {
   const [uniformItems, setUniformItems] = useState([])
   const [selectedStaffId, setSelectedStaffId] = useState('')
   const [lines, setLines] = useState([createEmptyLine()])
+  const [note, setNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -91,6 +91,7 @@ export default function CreateRequestPage() {
     try {
       const payload = {
         staffId: Number(selectedStaffId),
+        note: note.trim() || null,
         items: lines.map((line) => ({
           uniformItemId: Number(line.uniformItemId),
           quantity: Number(line.quantity),
@@ -106,6 +107,7 @@ export default function CreateRequestPage() {
 
       setLines([createEmptyLine()])
       setSelectedStaffId('')
+      setNote('')
     } catch (error) {
       setErrorMessage(error.message)
     } finally {
@@ -119,7 +121,6 @@ export default function CreateRequestPage() {
 
   return (
     <section className="mx-auto max-w-5xl">
-      <ConnectivityTest />
       <PageTitle title="Create Request" subtitle="Create a uniform request with live allowance and stock context." />
 
       <ErrorAlert message={errorMessage} />
@@ -194,7 +195,9 @@ export default function CreateRequestPage() {
                   <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
                     <span>In Stock: {item.stockOnHand}</span>
                     {item.isLowStock ? (
-                      <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-700">Low Stock</span>
+                      <span className="rounded-full border border-amber-300 bg-amber-200 px-2 py-1 font-semibold text-amber-900">
+                        Low Stock
+                      </span>
                     ) : null}
                   </div>
                 ) : null}
@@ -241,6 +244,18 @@ export default function CreateRequestPage() {
         {cartExceedsAllowance ? (
           <p className="text-sm text-rose-600">Request exceeds remaining allowance.</p>
         ) : null}
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Note (Optional)</label>
+          <textarea
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            maxLength={500}
+            rows={3}
+            placeholder="Add a note for this request..."
+            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
 
         {!canSubmit ? (
           <p className="text-sm text-rose-600">*Please fill in all the required fields.</p>

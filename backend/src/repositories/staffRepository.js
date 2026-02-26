@@ -1,4 +1,4 @@
-const { get, all } = require('./dbHelpers');
+const { get, all, run } = require('./dbHelpers');
 
 const getStaffById = async (id) => {
   const sql = `
@@ -42,14 +42,38 @@ const getRoleAllowanceLimits = async () => {
   const sql = `
     SELECT role_name AS roleName, annual_limit AS annualLimit
     FROM role_allowance_limits
+    ORDER BY role_name ASC
   `;
 
   return all(sql);
+};
+
+const getRoleByName = async (name) => {
+  const sql = `
+    SELECT id, name
+    FROM roles
+    WHERE UPPER(name) = UPPER(?)
+  `;
+
+  return get(sql, [name]);
+};
+
+const upsertRoleAllowanceLimit = async (roleName, annualLimit) => {
+  const sql = `
+    INSERT INTO role_allowance_limits (role_name, annual_limit)
+    VALUES (?, ?)
+    ON CONFLICT(role_name)
+    DO UPDATE SET annual_limit = excluded.annual_limit
+  `;
+
+  await run(sql, [roleName, annualLimit]);
 };
 
 module.exports = {
   getStaffById,
   getStaffWithUsedAllowanceForYear,
   getRoleAllowanceLimits,
+  getRoleByName,
+  upsertRoleAllowanceLimit,
 };
 

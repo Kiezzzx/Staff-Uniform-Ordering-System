@@ -18,9 +18,17 @@ const errorHandler = (err, req, res, next) => {
   console.error('[errorHandler] error:', err);
   console.error('[errorHandler] stack:', err?.stack);
 
-  const code = err?.code || 'INTERNAL_SERVER_ERROR';
+  let code = err?.code || 'INTERNAL_SERVER_ERROR';
+  let message = err?.message || 'An unexpected error occurred.';
+
+  if (err?.name === 'MulterError') {
+    code = 'VALIDATION_ERROR';
+    if (err?.code === 'LIMIT_FILE_SIZE') {
+      message = 'File is too large. Maximum size is 2MB.';
+    }
+  }
+
   const status = STATUS_BY_CODE[code] || 500;
-  const message = err?.message || 'An unexpected error occurred.';
 
   res.status(status).json({
     error: {

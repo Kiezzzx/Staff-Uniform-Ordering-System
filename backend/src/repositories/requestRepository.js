@@ -1,12 +1,12 @@
 ﻿const { get, run, all } = require('./dbHelpers');
 
-const createUniformRequest = async (staffId, requestedAt) => {
+const createUniformRequest = async (staffId, requestedAt, note) => {
   const insertSql = `
-    INSERT INTO uniform_requests (staff_id, status, requested_at)
-    VALUES (?, 'REQUESTED', ?)
+    INSERT INTO uniform_requests (staff_id, status, reorder_reason, requested_at)
+    VALUES (?, 'REQUESTED', ?, ?)
   `;
 
-  const { lastID } = await run(insertSql, [staffId, requestedAt]);
+  const { lastID } = await run(insertSql, [staffId, note, requestedAt]);
 
   const selectSql = 'SELECT * FROM uniform_requests WHERE id = ?';
   return get(selectSql, [lastID]);
@@ -43,12 +43,14 @@ const getUsedAllowanceForYear = async (staffId, year) => {
 
 const getLatestRequestForItem = async (staffId, uniformItemId) => {
   const sql = `
-    SELECT ur.*
+    SELECT
+      ur.*,
+      COALESCE(ur.collected_at, ur.requested_at) AS cooldown_anchor_at
     FROM uniform_requests ur
     INNER JOIN uniform_request_items uri ON uri.request_id = ur.id
     WHERE ur.staff_id = ?
       AND uri.uniform_item_id = ?
-    ORDER BY ur.requested_at DESC, ur.id DESC
+    ORDER BY cooldown_anchor_at DESC, ur.id DESC
     LIMIT 1
   `;
 
@@ -119,6 +121,7 @@ const getUniformRequestDetailById = async (id) => {
       s.name AS staffName,
       st.name AS storeName,
       ur.status,
+      ur.reorder_reason AS reorderReason,
       ur.requested_at AS requestedAt
     FROM uniform_requests ur
     INNER JOIN staff s ON s.id = ur.staff_id

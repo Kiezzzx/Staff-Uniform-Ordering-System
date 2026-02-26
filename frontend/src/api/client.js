@@ -31,6 +31,13 @@ const request = async (path, options = {}) => {
 
 export const api = {
   getStaff: () => request('/staff'),
+  getRoleLimits: () => request('/staff/role-limits'),
+  updateRoleLimit: (roleName, annualLimit) =>
+    request(`/staff/role-limits/${encodeURIComponent(roleName)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ annualLimit }),
+    }),
   getUniformItems: () => request('/uniform-items'),
   getRequests: ({ status, staffId, storeId } = {}) => {
     const params = new URLSearchParams()

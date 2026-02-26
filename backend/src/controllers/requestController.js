@@ -3,13 +3,13 @@ const { createHttpError } = require('../errors/createHttpError');
 
 const createRequest = async (req, res, next) => {
   try {
-    const { staffId, items } = req.body || {};
+    const { staffId, items, note } = req.body || {};
 
     if (staffId === undefined || !Array.isArray(items)) {
       return next(createHttpError('VALIDATION_ERROR', 'staffId is required and items must be an array.'));
     }
 
-    const result = await requestService.createRequest({ staffId, items });
+    const result = await requestService.createRequest({ staffId, items, note });
     return res.status(201).json({ data: result });
   } catch (error) {
     return next(error);
