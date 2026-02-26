@@ -1,4 +1,4 @@
-﻿const { get, run, all } = require('./dbHelpers');
+const { get, run, all } = require('./dbHelpers');
 
 const getUniformItemById = async (id) => {
   const sql = 'SELECT * FROM uniform_items WHERE id = ?';
@@ -35,3 +35,6 @@ module.exports = {
   decrementStockIfAvailable,
   getUniformItems,
 };
+
+
+

@@ -4,7 +4,7 @@ const requestRepository = require('../repositories/requestRepository');
 const { run } = require('../repositories/dbHelpers');
 
 const COOLDOWN_DAYS = 30;
-const ROLE_LIMITS = {
+const DEFAULT_ROLE_LIMITS = {
   MANAGER: 5,
   CASUAL: 2,
 };
@@ -32,6 +32,19 @@ const createError = (code, message, details = null) => {
 };
 
 const toUtcDate = (value) => new Date(value);
+
+const getRoleLimitsMap = async () => {
+  const rows = await staffRepository.getRoleAllowanceLimits();
+  const dbLimits = rows.reduce((acc, row) => {
+    acc[String(row.roleName || '').toUpperCase()] = Number(row.annualLimit);
+    return acc;
+  }, {});
+
+  return {
+    ...DEFAULT_ROLE_LIMITS,
+    ...dbLimits,
+  };
+};
 
 const createRequest = async ({ staffId, items }) => {
   // STEP 1: Basic Parameter Validation
@@ -74,7 +87,8 @@ const createRequest = async ({ staffId, items }) => {
 
   // STEP 5: Allowance Check
   const roleName = (staff.role_name || staff.role || '').toUpperCase();
-  const yearlyLimit = ROLE_LIMITS[roleName];
+  const roleLimits = await getRoleLimitsMap();
+  const yearlyLimit = roleLimits[roleName];
 
   if (!yearlyLimit) {
     throw createError('VALIDATION_ERROR', 'Staff role is not configured for allowance limits.');

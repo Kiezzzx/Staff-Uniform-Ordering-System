@@ -10,6 +10,12 @@ CREATE TABLE IF NOT EXISTS roles (
   name TEXT NOT NULL UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS role_allowance_limits (
+  id INTEGER PRIMARY KEY,
+  role_name TEXT NOT NULL UNIQUE,
+  annual_limit INTEGER NOT NULL CHECK (annual_limit >= 0)
+);
+
 CREATE TABLE IF NOT EXISTS staff (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
@@ -71,3 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_staff_store ON staff(store_id);
 CREATE INDEX IF NOT EXISTS idx_staff_role ON staff(role_id);
 CREATE INDEX IF NOT EXISTS idx_req_staff ON uniform_requests(staff_id);
 CREATE INDEX IF NOT EXISTS idx_req_status ON uniform_requests(status);
+
+INSERT OR IGNORE INTO role_allowance_limits (role_name, annual_limit) VALUES
+  ('MANAGER', 5),
+  ('CASUAL', 2);

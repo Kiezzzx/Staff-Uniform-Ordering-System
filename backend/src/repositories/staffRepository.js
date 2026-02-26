@@ -1,4 +1,4 @@
-﻿const { get, all } = require('./dbHelpers');
+const { get, all } = require('./dbHelpers');
 
 const getStaffById = async (id) => {
   const sql = `
@@ -32,13 +32,24 @@ const getStaffWithUsedAllowanceForYear = async (year) => {
       AND ur.requested_at < ?
     LEFT JOIN uniform_request_items uri ON uri.request_id = ur.id
     GROUP BY s.id, s.name, st.name, r.name
-    ORDER BY s.name ASC
+    ORDER BY s.id ASC
   `;
 
   return all(sql, [start, end]);
 };
 
+const getRoleAllowanceLimits = async () => {
+  const sql = `
+    SELECT role_name AS roleName, annual_limit AS annualLimit
+    FROM role_allowance_limits
+  `;
+
+  return all(sql);
+};
+
 module.exports = {
   getStaffById,
   getStaffWithUsedAllowanceForYear,
+  getRoleAllowanceLimits,
 };
+
