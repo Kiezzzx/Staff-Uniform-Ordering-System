@@ -23,21 +23,22 @@ The following updates were implemented after interview discussion and are includ
 ## Demo Preview
 
 ### 1) Create Request
-![Create Request](docs/demo/create-request.png)
+![Create Request](docs/create-request.png)
 
 ### 2) Request Detail - Edit / Delete Request
 Highlights:
 - Edit Request functionality is supported from request detail flow.
-![Request Detail Edit Delete](docs/demo/request-detail-edit-delete.png)
+
+![Request Detail Edit Delete](docs/request-detail-edit-delete.png)
 
 ### 3) Import Data
-![Import Data](docs/demo/import-data.png)
+![Import Data](docs/import-data.png)
 
 ### 4) Staff Page - Role Allowance + Role Cooldown Limits
 Highlights:
 - Role Cooldown Limits are configurable by role from the Staff page.
 
-![Staff Page Role Cooldown Limits](docs/demo/staff-role-cooldown-limits.png)
+![Staff Page Role Cooldown Limits](docs/staff-role-cooldown-limits.png)
 
 ---
 
