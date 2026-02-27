@@ -9,6 +9,17 @@ The goal is to demonstrate practical engineering in:
 - Clean API design
 - Usable operational UI
 
+## Post-Interview Refinements
+The following updates were implemented after interview discussion and are included in the current codebase:
+
+- **Edit Request functionality**
+  - Managers can edit request line items while the request is still in `REQUESTED` status.
+  - The update flow rebalances stock and allowance inside a transaction to avoid partial writes.
+
+- **Role Cooldown Limits**
+  - Cooldown is configurable per role via dedicated role cooldown settings.
+  - Request creation/edit cooldown checks now resolve by staff role rather than a single hardcoded value.
+
 ---
 
 ## 2. Tech Stack
