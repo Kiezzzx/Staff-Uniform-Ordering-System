@@ -41,6 +41,24 @@ const getUsedAllowanceForYear = async (staffId, year) => {
   return get(sql, [staffId, start, end]);
 };
 
+const getUsedAllowanceForYearExcludingRequest = async (staffId, year, excludeRequestId) => {
+  const start = `${year}-01-01T00:00:00.000Z`;
+  const end = `${Number(year) + 1}-01-01T00:00:00.000Z`;
+
+  const sql = `
+    SELECT COALESCE(SUM(uri.quantity), 0) AS used_quantity
+    FROM uniform_request_items uri
+    INNER JOIN uniform_requests ur ON ur.id = uri.request_id
+    WHERE ur.staff_id = ?
+      AND ur.id <> ?
+      AND ur.status IN ('REQUESTED', 'DISPATCHED', 'ARRIVED', 'COLLECTED')
+      AND ur.requested_at >= ?
+      AND ur.requested_at < ?
+  `;
+
+  return get(sql, [staffId, excludeRequestId, start, end]);
+};
+
 const getLatestRequestForItem = async (staffId, uniformItemId) => {
   const sql = `
     SELECT
@@ -55,6 +73,23 @@ const getLatestRequestForItem = async (staffId, uniformItemId) => {
   `;
 
   return get(sql, [staffId, uniformItemId]);
+};
+
+const getLatestRequestForItemExcludingRequest = async (staffId, uniformItemId, excludeRequestId) => {
+  const sql = `
+    SELECT
+      ur.*,
+      COALESCE(ur.collected_at, ur.requested_at) AS cooldown_anchor_at
+    FROM uniform_requests ur
+    INNER JOIN uniform_request_items uri ON uri.request_id = ur.id
+    WHERE ur.staff_id = ?
+      AND uri.uniform_item_id = ?
+      AND ur.id <> ?
+    ORDER BY cooldown_anchor_at DESC, ur.id DESC
+    LIMIT 1
+  `;
+
+  return get(sql, [staffId, uniformItemId, excludeRequestId]);
 };
 
 const getUniformRequestById = async (id) => {
@@ -148,14 +183,48 @@ const getUniformRequestItemsByRequestId = async (requestId) => {
   return all(sql, [requestId]);
 };
 
+const deleteUniformRequestItemsByRequestId = async (requestId) => {
+  const sql = `
+    DELETE FROM uniform_request_items
+    WHERE request_id = ?
+  `;
+
+  return run(sql, [requestId]);
+};
+
+const deleteUniformRequestById = async (requestId) => {
+  const sql = `
+    DELETE FROM uniform_requests
+    WHERE id = ?
+  `;
+
+  return run(sql, [requestId]);
+};
+
+const updateUniformRequestForEdit = async (requestId, note) => {
+  const sql = `
+    UPDATE uniform_requests
+    SET reorder_reason = ?
+    WHERE id = ?
+  `;
+
+  await run(sql, [note, requestId]);
+  return getUniformRequestById(requestId);
+};
+
 module.exports = {
   createUniformRequest,
   createUniformRequestItem,
   getUsedAllowanceForYear,
+  getUsedAllowanceForYearExcludingRequest,
   getLatestRequestForItem,
+  getLatestRequestForItemExcludingRequest,
   getUniformRequestById,
   updateUniformRequestStatus,
   getUniformRequests,
   getUniformRequestDetailById,
   getUniformRequestItemsByRequestId,
+  deleteUniformRequestItemsByRequestId,
+  deleteUniformRequestById,
+  updateUniformRequestForEdit,
 };

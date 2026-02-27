@@ -46,6 +46,14 @@ const getRoleLimits = async () => {
   }));
 };
 
+const getRoleCooldowns = async () => {
+  const rows = await staffRepository.getRoleCooldownLimits();
+  return rows.map((row) => ({
+    role: String(row.roleName || '').toUpperCase(),
+    cooldownDays: Number(row.cooldownDays || 0),
+  }));
+};
+
 const updateRoleLimit = async ({ roleName, annualLimit }) => {
   const normalizedRoleName = String(roleName || '').trim().toUpperCase();
   const limit = Number(annualLimit);
@@ -77,8 +85,41 @@ const updateRoleLimit = async ({ roleName, annualLimit }) => {
   };
 };
 
+const updateRoleCooldown = async ({ roleName, cooldownDays }) => {
+  const normalizedRoleName = String(roleName || '').trim().toUpperCase();
+  const days = Number(cooldownDays);
+
+  if (!normalizedRoleName) {
+    const error = new Error('roleName is required.');
+    error.code = 'VALIDATION_ERROR';
+    throw error;
+  }
+
+  if (!Number.isInteger(days) || days < 0) {
+    const error = new Error('cooldownDays must be an integer >= 0.');
+    error.code = 'VALIDATION_ERROR';
+    throw error;
+  }
+
+  const role = await staffRepository.getRoleByName(normalizedRoleName);
+  if (!role) {
+    const error = new Error('Role not found.');
+    error.code = 'NOT_FOUND';
+    throw error;
+  }
+
+  await staffRepository.upsertRoleCooldownLimit(normalizedRoleName, days);
+
+  return {
+    role: normalizedRoleName,
+    cooldownDays: days,
+  };
+};
+
 module.exports = {
   getStaff,
   getRoleLimits,
+  getRoleCooldowns,
   updateRoleLimit,
+  updateRoleCooldown,
 };

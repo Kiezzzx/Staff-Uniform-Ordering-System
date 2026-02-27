@@ -32,11 +32,25 @@ const request = async (path, options = {}) => {
 export const api = {
   getStaff: () => request('/staff'),
   getRoleLimits: () => request('/staff/role-limits'),
+  getRoleCooldowns: () => request('/staff/role-cooldowns'),
+  getCooldown: () => request('/settings/cooldown'),
   updateRoleLimit: (roleName, annualLimit) =>
     request(`/staff/role-limits/${encodeURIComponent(roleName)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ annualLimit }),
+    }),
+  updateRoleCooldown: (roleName, cooldownDays) =>
+    request(`/staff/role-cooldowns/${encodeURIComponent(roleName)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cooldownDays }),
+    }),
+  updateCooldown: (cooldownDays) =>
+    request('/settings/cooldown', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cooldownDays }),
     }),
   getUniformItems: () => request('/uniform-items'),
   getRequests: ({ status, staffId, storeId } = {}) => {
@@ -53,6 +67,16 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+    }),
+  updateRequest: (id, payload) =>
+    request(`/requests/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  deleteRequest: (id) =>
+    request(`/requests/${id}`, {
+      method: 'DELETE',
     }),
   updateRequestStatus: (id, status) =>
     request(`/requests/${id}/status`, {

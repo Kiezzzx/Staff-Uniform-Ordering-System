@@ -6,9 +6,13 @@ import ErrorAlert from '../components/ErrorAlert'
 export default function StaffPage() {
   const [items, setItems] = useState([])
   const [roleLimits, setRoleLimits] = useState([])
+  const [roleCooldowns, setRoleCooldowns] = useState([])
   const [selectedRole, setSelectedRole] = useState('')
   const [annualLimit, setAnnualLimit] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [selectedCooldownRole, setSelectedCooldownRole] = useState('')
+  const [roleCooldownDays, setRoleCooldownDays] = useState('')
+  const [isSavingRoleCooldown, setIsSavingRoleCooldown] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -17,15 +21,26 @@ export default function StaffPage() {
     setIsLoading(true)
     setErrorMessage('')
     try {
-      const [staffRes, limitsRes] = await Promise.all([api.getStaff(), api.getRoleLimits()])
+      const [staffRes, limitsRes, cooldownsRes] = await Promise.all([
+        api.getStaff(),
+        api.getRoleLimits(),
+        api.getRoleCooldowns(),
+      ])
       const loadedStaff = staffRes.items || []
       const loadedLimits = limitsRes.items || []
+      const loadedCooldowns = cooldownsRes.items || []
       setItems(loadedStaff)
       setRoleLimits(loadedLimits)
+      setRoleCooldowns(loadedCooldowns)
 
       if (!selectedRole && loadedLimits.length > 0) {
         setSelectedRole(loadedLimits[0].role)
         setAnnualLimit(String(loadedLimits[0].annualLimit))
+      }
+
+      if (!selectedCooldownRole && loadedCooldowns.length > 0) {
+        setSelectedCooldownRole(loadedCooldowns[0].role)
+        setRoleCooldownDays(String(loadedCooldowns[0].cooldownDays))
       }
     } catch (error) {
       setErrorMessage(error.message)
@@ -66,6 +81,36 @@ export default function StaffPage() {
       setErrorMessage(error.message)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleCooldownRoleChange = (event) => {
+    const nextRole = event.target.value
+    setSelectedCooldownRole(nextRole)
+    const matched = roleCooldowns.find((item) => item.role === nextRole)
+    setRoleCooldownDays(matched ? String(matched.cooldownDays) : '')
+    setSuccessMessage('')
+  }
+
+  const handleSaveRoleCooldown = async () => {
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    const parsedDays = Number(roleCooldownDays)
+    if (!selectedCooldownRole || !Number.isInteger(parsedDays) || parsedDays < 0) {
+      setErrorMessage('Please select a role and enter a valid cooldown days value.')
+      return
+    }
+
+    setIsSavingRoleCooldown(true)
+    try {
+      await api.updateRoleCooldown(selectedCooldownRole, parsedDays)
+      setSuccessMessage('Role cooldown updated.')
+      await load()
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setIsSavingRoleCooldown(false)
     }
   }
 
@@ -115,6 +160,45 @@ export default function StaffPage() {
             className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-slate-300"
           >
             {isSaving ? 'Saving...' : 'Save Limit'}
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-4 rounded-lg bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Role Cooldown Limits</h2>
+        <p className="mt-1 text-xs text-slate-600">Set cooldown days by role.</p>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <select
+            value={selectedCooldownRole}
+            onChange={handleCooldownRoleChange}
+            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">Select role</option>
+            {roleCooldowns.map((item) => (
+              <option key={item.role} value={item.role}>
+                {item.role}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={roleCooldownDays}
+            onChange={(event) => setRoleCooldownDays(event.target.value)}
+            placeholder="Cooldown days"
+            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
+          <button
+            type="button"
+            onClick={handleSaveRoleCooldown}
+            disabled={isSavingRoleCooldown}
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-slate-300"
+          >
+            {isSavingRoleCooldown ? 'Saving...' : 'Save Role Cooldown'}
           </button>
         </div>
       </div>

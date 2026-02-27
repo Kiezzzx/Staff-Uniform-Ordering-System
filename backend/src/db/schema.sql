@@ -16,6 +16,17 @@ CREATE TABLE IF NOT EXISTS role_allowance_limits (
   annual_limit INTEGER NOT NULL CHECK (annual_limit >= 0)
 );
 
+CREATE TABLE IF NOT EXISTS role_cooldown_limits (
+  id INTEGER PRIMARY KEY,
+  role_name TEXT NOT NULL UNIQUE,
+  cooldown_days INTEGER NOT NULL CHECK (cooldown_days >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS system_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS staff (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
@@ -82,3 +93,10 @@ CREATE INDEX IF NOT EXISTS idx_req_status ON uniform_requests(status);
 INSERT OR IGNORE INTO role_allowance_limits (role_name, annual_limit) VALUES
   ('MANAGER', 5),
   ('CASUAL', 2);
+
+INSERT OR IGNORE INTO role_cooldown_limits (role_name, cooldown_days) VALUES
+  ('MANAGER', 30),
+  ('CASUAL', 30);
+
+INSERT OR IGNORE INTO system_settings (key, value)
+VALUES ('COOLDOWN_DAYS', '30');

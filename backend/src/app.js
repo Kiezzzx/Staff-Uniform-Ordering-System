@@ -6,6 +6,7 @@ const requestRoutes = require('./routes/requestRoutes');
 const importRoutes = require('./routes/importRoutes');
 const staffRoutes = require('./routes/staffRoutes');
 const uniformItemRoutes = require('./routes/uniformItemRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 const { handleNotFound, errorHandler } = require('./errors/errorMiddleware');
 
 const app = express();
@@ -13,7 +14,7 @@ const PORT = Number(process.env.PORT) || 3000;
 
 const corsOptions = {
   origin: 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 };
 
 app.use(cors(corsOptions));
@@ -27,6 +28,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/imports', importRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/uniform-items', uniformItemRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.use(handleNotFound);
 app.use(errorHandler);

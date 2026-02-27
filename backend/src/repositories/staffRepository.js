@@ -48,6 +48,16 @@ const getRoleAllowanceLimits = async () => {
   return all(sql);
 };
 
+const getRoleCooldownLimits = async () => {
+  const sql = `
+    SELECT role_name AS roleName, cooldown_days AS cooldownDays
+    FROM role_cooldown_limits
+    ORDER BY role_name ASC
+  `;
+
+  return all(sql);
+};
+
 const getRoleByName = async (name) => {
   const sql = `
     SELECT id, name
@@ -69,11 +79,24 @@ const upsertRoleAllowanceLimit = async (roleName, annualLimit) => {
   await run(sql, [roleName, annualLimit]);
 };
 
+const upsertRoleCooldownLimit = async (roleName, cooldownDays) => {
+  const sql = `
+    INSERT INTO role_cooldown_limits (role_name, cooldown_days)
+    VALUES (?, ?)
+    ON CONFLICT(role_name)
+    DO UPDATE SET cooldown_days = excluded.cooldown_days
+  `;
+
+  await run(sql, [roleName, cooldownDays]);
+};
+
 module.exports = {
   getStaffById,
   getStaffWithUsedAllowanceForYear,
   getRoleAllowanceLimits,
+  getRoleCooldownLimits,
   getRoleByName,
   upsertRoleAllowanceLimit,
+  upsertRoleCooldownLimit,
 };
 

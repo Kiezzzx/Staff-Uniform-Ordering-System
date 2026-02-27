@@ -49,9 +49,33 @@ const updateRequestStatus = async (req, res, next) => {
   }
 };
 
+const updateRequestItems = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { items, note } = req.body || {};
+
+    const result = await requestService.updateRequestItems({ id, items, note });
+    return res.status(200).json({ data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const deleteRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await requestService.deleteRequest({ id });
+    return res.status(200).json({ data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   createRequest,
   listRequests,
   getRequestById,
   updateRequestStatus,
+  updateRequestItems,
+  deleteRequest,
 };

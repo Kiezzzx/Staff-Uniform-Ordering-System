@@ -18,6 +18,15 @@ const listRoleLimits = async (req, res, next) => {
   }
 };
 
+const listRoleCooldowns = async (req, res, next) => {
+  try {
+    const items = await staffService.getRoleCooldowns();
+    return res.status(200).json({ data: { items } });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const updateRoleLimit = async (req, res, next) => {
   try {
     const { roleName } = req.params;
@@ -29,8 +38,21 @@ const updateRoleLimit = async (req, res, next) => {
   }
 };
 
+const updateRoleCooldown = async (req, res, next) => {
+  try {
+    const { roleName } = req.params;
+    const { cooldownDays } = req.body || {};
+    const data = await staffService.updateRoleCooldown({ roleName, cooldownDays });
+    return res.status(200).json({ data });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   listStaff,
   listRoleLimits,
+  listRoleCooldowns,
   updateRoleLimit,
+  updateRoleCooldown,
 };

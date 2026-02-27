@@ -15,6 +15,16 @@ const decrementStockIfAvailable = async (uniformItemId, quantity) => {
   return run(sql, [quantity, uniformItemId, quantity]);
 };
 
+const incrementStock = async (uniformItemId, quantity) => {
+  const sql = `
+    UPDATE uniform_items
+    SET stock_on_hand = stock_on_hand + ?
+    WHERE id = ?
+  `;
+
+  return run(sql, [quantity, uniformItemId]);
+};
+
 const getUniformItems = async () => {
   const sql = `
     SELECT
@@ -33,6 +43,7 @@ const getUniformItems = async () => {
 module.exports = {
   getUniformItemById,
   decrementStockIfAvailable,
+  incrementStock,
   getUniformItems,
 };
 
