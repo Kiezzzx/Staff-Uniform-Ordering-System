@@ -20,6 +20,24 @@ The following updates were implemented after interview discussion and are includ
   - Cooldown is configurable per role via dedicated role cooldown settings.
   - Request creation/edit cooldown checks now resolve by staff role rather than a single hardcoded value.
 
+## Demo Preview
+
+### 1) Create Request
+![Create Request](docs/demo/create-request.png)
+
+### 2) Request Detail - Edit / Delete Request
+![Request Detail Edit Delete](docs/demo/request-detail-edit-delete.png)
+
+### 3) Import Data
+![Import Data](docs/demo/import-data.png)
+
+### 4) Staff Page - Role Allowance + Role Cooldown Limits
+Highlights:
+- Edit Request functionality is supported from request detail flow.
+- Role Cooldown Limits are configurable by role from the Staff page.
+
+![Staff Page Role Cooldown Limits](docs/demo/staff-role-cooldown-limits.png)
+
 ---
 
 ## 2. Tech Stack
