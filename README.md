@@ -1,7 +1,7 @@
 # Staff Uniform Ordering System
 
 ## 1. Project Overview
-This project is a take-home full-stack feature that allows store managers to import staff/uniform data, create uniform requests with business-rule enforcement, and track request status through a defined lifecycle.
+This project is a full-stack system that allows store managers to import staff/uniform data, create uniform requests with business-rule enforcement, and track request status through a defined lifecycle.
 
 The goal is to demonstrate practical engineering in:
 - Data import and validation
@@ -9,8 +9,8 @@ The goal is to demonstrate practical engineering in:
 - Clean API design
 - Usable operational UI
 
-## Post-Interview Refinements
-The following updates were implemented after interview discussion and are included in the current codebase:
+## Feature Refinements
+The following updates are included in the current codebase:
 
 - **Edit Request functionality**
   - Managers can edit request line items while the request is still in `REQUESTED` status.
@@ -207,3 +207,4 @@ Frontend runs on: `http://localhost:5173`
 - No authentication/authorization (explicitly out of scope for this task).
 - Designed as an operational internal tool for store managers.
 - Focused on correctness of business rules, data integrity, and clear UI workflows over broad feature scope.
+
